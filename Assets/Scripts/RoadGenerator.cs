@@ -6,62 +6,74 @@ public class RoadGenerator : MonoBehaviour
 {
     public GameObject roadStraight;
     public GameObject roadCurve;
-    public GameObject fieldPrefab; // Prefab para el campo
+    public GameObject fieldPrefab;
+    public GameObject[] smallBuildings;
 
-    public int roadCount = 30;     // Número total de carreteras
-    public int segmentLength = 10; // Longitud de cada segmento
+    public GameObject[] bigBuildings;
+
+    public GameObject sidewalkPrefab; // Prefab de la acera
+
+    public int roadCount = 30;
+    public int segmentLength = 10;
 
     private Vector2 currentPos;
     private Vector2 currentDirection;
 
+    private List<Vector2> roadPositions = new List<Vector2>();
+    private Transform roadsParent;
+    private Transform fieldsParent;
+
     private Vector2[] directions = new Vector2[]
     {
-        new Vector2(0, 1),  // Arriba
-        new Vector2(1, 0),  // Derecha
-        new Vector2(0, -1), // Abajo
-        new Vector2(-1, 0)  // Izquierda
+        new Vector2(0, 1),
+        new Vector2(1, 0),
+        new Vector2(0, -1),
+        new Vector2(-1, 0)
     };
-
-    // Lista para almacenar las posiciones de los segmentos de carretera generados
-    private List<Vector2> roadPositions = new List<Vector2>();
 
     void Start()
     {
+        roadsParent = new GameObject("Roads").transform;
+        fieldsParent = new GameObject("Fields").transform;
         StartCoroutine(GenerateRoads());
     }
 
-    IEnumerator GenerateRoads()
+IEnumerator GenerateRoads()
+{
+    currentPos = Vector2.zero;
+    currentDirection = directions[Random.Range(0, directions.Length)];
+
+    for (int i = 0; i < roadCount; i++)
     {
-        currentPos = Vector2.zero;
-        currentDirection = directions[Random.Range(0, directions.Length)];
-
-        for (int i = 0; i < roadCount; i++)
+        if (i % 3 == 0)
         {
-            if (i % 3 == 0) // Cada 3 segmentos (30 metros) pone una curva
-            {
-                ChangeDirection();
-                PlaceRoad(currentPos, roadCurve, GetRotationCurve(currentDirection));
-            }
-            else
-            {
-                PlaceRoad(currentPos, roadStraight, GetRotation(currentDirection));
-            }
-
-            roadPositions.Add(currentPos); // Almacenar la posición del segmento
-            currentPos += currentDirection * segmentLength;
-            yield return null; // Generar instantáneamente
+            ChangeDirection();
+            PlaceRoad(currentPos, roadCurve, GetRotationCurve(currentDirection));
+        }
+        else
+        {
+            PlaceRoad(currentPos, roadStraight, GetRotation(currentDirection));
         }
 
-        CheckUnconnectedRoads(); // Verificar si hay carreteras no unidas
-
-        // Coloca el campo alrededor de las intersecciones
-        PlaceFieldAroundIntersections();
+        roadPositions.Add(currentPos);
+        currentPos += currentDirection * segmentLength;
+        yield return null;
     }
+
+    CheckUnconnectedRoads();
+    PlaceFieldAroundIntersections();
+
+    // Aquí llamamos a la generación de edificios
+    BuildingGenerator buildingGen = gameObject.AddComponent<BuildingGenerator>();
+    buildingGen.smallBuildings = smallBuildings; // Asegúrate de asignar los prefabs
+    buildingGen.bigBuildings = bigBuildings;
+    buildingGen.GenerateBuildings(roadPositions); // Llama a la función correcta
+}
 
     void ChangeDirection()
     {
         Vector2 oldDirection = currentDirection;
-        while (currentDirection == oldDirection || currentDirection == -oldDirection) 
+        while (currentDirection == oldDirection || currentDirection == -oldDirection)
         {
             currentDirection = directions[Random.Range(0, directions.Length)];
         }
@@ -69,7 +81,9 @@ public class RoadGenerator : MonoBehaviour
 
     void PlaceRoad(Vector2 position, GameObject roadPrefab, Quaternion rotation)
     {
-        Instantiate(roadPrefab, new Vector3(position.x, 0, position.y), rotation);
+        GameObject road = Instantiate(roadPrefab, new Vector3(position.x, 0, position.y), rotation);
+        road.transform.parent = roadsParent; // Agrupar dentro de "Roads"
+        
     }
 
     Quaternion GetRotation(Vector2 direction)
@@ -83,24 +97,20 @@ public class RoadGenerator : MonoBehaviour
 
     Quaternion GetRotationCurve(Vector2 direction)
     {
-        if (direction == new Vector2(1, 0)) return Quaternion.Euler(0, 90, 0);   // Curva derecha
-        if (direction == new Vector2(-1, 0)) return Quaternion.Euler(0, -90, 0); // Curva izquierda
-        if (direction == new Vector2(0, 1)) return Quaternion.identity;         // Curva arriba
-        if (direction == new Vector2(0, -1)) return Quaternion.Euler(0, 180, 0); // Curva abajo
+        if (direction == new Vector2(1, 0)) return Quaternion.Euler(0, 90, 0);
+        if (direction == new Vector2(-1, 0)) return Quaternion.Euler(0, -90, 0);
+        if (direction == new Vector2(0, 1)) return Quaternion.identity;
+        if (direction == new Vector2(0, -1)) return Quaternion.Euler(0, 180, 0);
         return Quaternion.identity;
     }
 
-    // Comprobar carreteras no unidas
     void CheckUnconnectedRoads()
     {
         List<Vector2> roadsToConnect = new List<Vector2>(roadPositions);
 
-        // Recorre todas las posiciones generadas
         foreach (var position in roadPositions)
         {
-            // Comprueba si hay una conexión válida alrededor de cada posición
             bool isConnected = false;
-
             foreach (var direction in directions)
             {
                 Vector2 neighbor = position + direction * segmentLength;
@@ -114,36 +124,30 @@ public class RoadGenerator : MonoBehaviour
             if (!isConnected)
             {
                 Debug.LogWarning("Camino sin conectar en la posición: " + position);
-                roadsToConnect.Remove(position); // Eliminar la carretera no conectada
+                roadsToConnect.Remove(position);
             }
         }
 
-        // Intentar conectar los caminos no conectados
         ConnectUnconnectedRoads(roadsToConnect);
     }
 
-    // Método para conectar caminos no conectados
     void ConnectUnconnectedRoads(List<Vector2> roadsToConnect)
     {
         foreach (var road in roadsToConnect)
         {
-            // Busca el punto más cercano de la carretera que está conectada
             Vector2 closestConnectedPoint = FindClosestConnectedPoint(road);
 
             if (closestConnectedPoint != Vector2.zero)
             {
-                // Conectar caminos generando una nueva carretera entre ellos
                 Vector2 directionToConnect = closestConnectedPoint - road;
-                Vector2 newDirection = directionToConnect.normalized; // Normalizar
+                Vector2 newDirection = directionToConnect.normalized;
 
-                // Coloca la nueva carretera para conectar ambos puntos
                 PlaceRoad(road, roadStraight, GetRotation(newDirection));
-                roadPositions.Add(road); // Añadir la nueva carretera conectada
+                roadPositions.Add(road);
             }
         }
     }
 
-    // Encuentra el punto más cercano que está conectado
     Vector2 FindClosestConnectedPoint(Vector2 road)
     {
         Vector2 closest = Vector2.zero;
@@ -162,48 +166,75 @@ public class RoadGenerator : MonoBehaviour
         return closest;
     }
 
-    // Colocar el prefab del campo alrededor de las intersecciones
-    void PlaceFieldAroundIntersections()
+void PlaceFieldAroundIntersections()
+{
+    if (roadPositions.Count == 0) return;
+
+    float minX = float.MaxValue, maxX = float.MinValue;
+    float minY = float.MaxValue, maxY = float.MinValue;
+
+    foreach (var position in roadPositions)
     {
-        foreach (var position in roadPositions)
+        if (position.x < minX) minX = position.x;
+        if (position.x > maxX) maxX = position.x;
+        if (position.y < minY) minY = position.y;
+        if (position.y > maxY) maxY = position.y;
+    }
+
+    minX -= segmentLength;
+    maxX += segmentLength;
+    minY -= segmentLength;
+    maxY += segmentLength;
+
+    for (float x = minX; x <= maxX; x += segmentLength)
+    {
+        for (float y = minY; y <= maxY; y += segmentLength)
         {
-            // Comprobamos si la posición tiene carreteras adyacentes
-            foreach (var direction in directions)
+            Vector2 pos = new Vector2(x, y);
+
+            if (!roadPositions.Contains(pos))
             {
-                Vector2 neighbor = position + direction * segmentLength;
-                if (roadPositions.Contains(neighbor)) // Si hay una carretera adyacente
-                {
-                    // Colocamos el campo alrededor de esta intersección
-                    PlaceFieldAtPosition(position, direction);
-                    break; // Solo colocar una vez por intersección
-                }
+                GameObject field = Instantiate(fieldPrefab, new Vector3(x, 0, y), Quaternion.identity);
+                field.transform.parent = fieldsParent; // Agrupar dentro de "Fields"
             }
         }
     }
+}
 
-    // Colocar el campo en las posiciones alrededor de la carretera
     void PlaceFieldAtPosition(Vector2 roadPosition, Vector2 roadDirection)
     {
-        // Desplazamos el campo alrededor de la carretera con más espacio
-        Vector2 offset = roadDirection.normalized * (segmentLength * 2); // Aumentamos el espacio entre el campo y la carretera
+        Vector2 offset = roadDirection.normalized * (segmentLength * 2);
 
-        // Colocamos 4 campos alrededor de la intersección, ajustados por un offset
         Vector2[] offsets = new Vector2[]
         {
-            roadPosition + offset,                     // Campo en la dirección de la carretera
-            roadPosition - offset,                     // Campo en la dirección opuesta
-            roadPosition + new Vector2(offset.y, -offset.x), // Campo a la izquierda
-            roadPosition - new Vector2(offset.y, -offset.x)  // Campo a la derecha
+            roadPosition + offset,
+            roadPosition - offset,
+            roadPosition + new Vector2(offset.y, -offset.x),
+            roadPosition - new Vector2(offset.y, -offset.x)
         };
 
         foreach (var offsetPos in offsets)
         {
-            // Verificar si la posición ya está ocupada por una carretera
             if (!roadPositions.Contains(offsetPos))
             {
-                // Instanciar el prefab del campo en las posiciones calculadas
-                Instantiate(fieldPrefab, new Vector3(offsetPos.x, 0, offsetPos.y), Quaternion.identity);
+                GameObject field = Instantiate(fieldPrefab, new Vector3(offsetPos.x, 0, offsetPos.y), Quaternion.identity);
+                field.transform.parent = fieldsParent; // Agrupar dentro de "Fields"
             }
         }
     }
+
+    void PlaceSidewalks(Vector2 position, Vector2 roadDirection)
+{
+    // Calculamos los vectores perpendiculares a la dirección de la carretera
+    Vector2 perpendicular1 = new Vector2(-roadDirection.y, roadDirection.x) * (segmentLength / 2);
+    Vector2 perpendicular2 = new Vector2(roadDirection.y, -roadDirection.x) * (segmentLength / 2);
+
+    // Calculamos las posiciones a izquierda y derecha de la carretera
+    Vector2 leftSidewalkPos = position + perpendicular1;
+    Vector2 rightSidewalkPos = position + perpendicular2;
+
+    // Instanciamos las aceras a ambos lados
+    Instantiate(sidewalkPrefab, new Vector3(leftSidewalkPos.x, 0, leftSidewalkPos.y), Quaternion.identity, roadsParent);
+    Instantiate(sidewalkPrefab, new Vector3(rightSidewalkPos.x, 0, rightSidewalkPos.y), Quaternion.identity, roadsParent);
+}
 }
