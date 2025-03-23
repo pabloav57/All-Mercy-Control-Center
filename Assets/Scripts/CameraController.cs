@@ -1,52 +1,158 @@
+using System.Collections;
+using System.Net.NetworkInformation;
 using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    public float moveSpeed = 10f; // Velocidad de movimiento
-    public float zoomSpeed = 5f; // Velocidad de zoom
-    public float minZoom = 10f; // Zoom mínimo
-    public float maxZoom = 50f; // Zoom máximo
-    public float rotationSpeed = 3f; // Velocidad de rotación
-    public float minRotationX = 10f; // Rotación mínima en el eje X (ángulo)
-    public float maxRotationX = 50f; // Rotación máxima en el eje X (ángulo)
+    public static CameraController instance;
+    public Transform followTransform;
+    public Transform cameraTranform;
+    public float normalSpeed;
+    public float fastSpeed;
+    public float movementSpeed;
+    public float movementTime;
+    public float rotationAmount;
+    public Vector3 zoomAmount;
 
-    private Vector3 initialPosition;
+    public Vector3 newPosition;
+    public Quaternion newRotation;
+    public Vector3 newZoom;
+
+    public Vector3 dragStartPosition;
+    public Vector3 dragCurrentPosition;
+    public Vector3 rotateStartPosition;
+    public Vector3 rotateCurrentPosition;
+
 
     private void Start()
     {
-        initialPosition = transform.position;
+        instance = this;
+        newPosition = transform.position;
+        newRotation = transform.rotation;
+        newZoom = cameraTranform.localPosition;        
     }
 
     private void Update()
     {
-        // Movimiento de la cámara con las teclas W, A, S, D (y Q, E para subir/bajar)
-        float moveX = Input.GetAxis("Horizontal") * moveSpeed * Time.deltaTime; // A/D para moverse en el eje X
-        float moveZ = Input.GetAxis("Vertical") * moveSpeed * Time.deltaTime; // W/S para moverse en el eje Z
-        float moveY = 0f;
-
-        // Subir y bajar con Q y E
-        if (Input.GetKey(KeyCode.Q))
-            moveY = -moveSpeed * Time.deltaTime; // Subir
-        else if (Input.GetKey(KeyCode.E))
-            moveY = moveSpeed * Time.deltaTime; // Bajar
-
-        // Actualiza la posición de la cámara
-        transform.Translate(moveX, moveY, moveZ);
-
-        // Control de rotación con el ratón (mantén el botón derecho para rotar)
-        if (Input.GetMouseButton(1)) // Botón derecho para rotar
+                if(followTransform!=null)
         {
-            float rotationX = -Input.GetAxis("Mouse Y") * rotationSpeed; // Rotación vertical
-            float rotationY = Input.GetAxis("Mouse X") * rotationSpeed; // Rotación horizontal
-
-            // Limitar la rotación en el eje X para evitar la rotación extrema
-            Vector3 currentRotation = transform.eulerAngles;
-            currentRotation.x = Mathf.Clamp(currentRotation.x + rotationX, minRotationX, maxRotationX); // Limita la rotación en el eje X
-            transform.eulerAngles = new Vector3(currentRotation.x, currentRotation.y + rotationY, currentRotation.z);
+            transform.position = followTransform.position;
+        }
+        else
+        {
+        HandleMouseInput();
+        HandleMovementInput();
         }
 
-        // Control de zoom con la rueda del ratón
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
-        Camera.main.fieldOfView = Mathf.Clamp(Camera.main.fieldOfView - scroll * zoomSpeed, minZoom, maxZoom);
+        if(Input.GetKeyDown(KeyCode.Escape))
+        {
+            followTransform = null;
+        }
+
+    }
+
+    void HandleMouseInput()
+    {
+        if(Input.mouseScrollDelta.y != 0)
+        {
+            newZoom += Input.mouseScrollDelta.y * zoomAmount;
+        }
+        if (Input.GetMouseButtonDown(0))
+        {
+            Plane plane = new Plane(Vector3.up, Vector3.zero);
+
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+            float entry;
+
+            if(plane.Raycast(ray, out entry))
+            {
+                dragStartPosition = ray.GetPoint(entry);
+            }
+        }
+
+                if (Input.GetMouseButtonDown(0))
+        {
+            Plane plane = new Plane(Vector3.up, Vector3.zero);
+
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+            float entry;
+
+            if(plane.Raycast(ray, out entry))
+            {
+                dragCurrentPosition = ray.GetPoint(entry);
+                newPosition = transform.position + dragStartPosition - dragCurrentPosition;
+            }
+        }
+
+        if(Input.GetMouseButtonDown(2))
+        {
+           rotateStartPosition = Input.mousePosition; 
+        }
+        if(Input.GetMouseButtonDown(2))
+        {
+           Vector3 difference = rotateStartPosition - rotateCurrentPosition; 
+           rotateStartPosition = rotateCurrentPosition;
+           newRotation *= Quaternion.Euler(Vector3.up * (-difference.x / 5f));
+        }
+    }
+
+    void HandleMovementInput()
+    {
+        if(Input.GetKey(KeyCode.LeftShift))
+        {
+            movementSpeed = fastSpeed;
+        }
+        else
+        {
+            movementSpeed = normalSpeed;
+        }
+
+        if(Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+        {
+            newPosition += (transform.forward * movementSpeed);
+        }
+
+        if(Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+        {
+            newPosition += (transform.forward * -movementSpeed);
+        }
+
+        if(Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+        {
+            newPosition += (transform.right * movementSpeed);
+        }
+
+        if(Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+        {
+            newPosition += (transform.right * -movementSpeed);
+        }
+
+        if(Input.GetKey(KeyCode.Q))
+        {
+            newRotation *= Quaternion.Euler(Vector3.up * rotationAmount);
+        }
+
+        if(Input.GetKey(KeyCode.E))
+        {
+            newRotation *= Quaternion.Euler(Vector3.up * -rotationAmount);
+        }
+        
+        if(Input.GetKey(KeyCode.R))
+        {
+            newZoom += zoomAmount;
+        }
+
+        if(Input.GetKey(KeyCode.F))
+        {
+            newZoom -= zoomAmount;
+        }
+
+
+        transform.position = Vector3.Lerp(transform.position, newPosition, Time.deltaTime * movementTime);
+        transform.rotation = Quaternion.Lerp(transform.rotation, newRotation, Time.deltaTime * movementTime);
+        cameraTranform.localPosition = Vector3.Lerp(cameraTranform.localPosition, newZoom, Time.deltaTime * movementTime);
+
     }
 }

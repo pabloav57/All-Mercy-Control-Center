@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-public class CarController : MonoBehaviour
+public class CarAI : MonoBehaviour
 {
     public NavMeshAgent agent;
     private Vector3 randomDestination;
