@@ -39,7 +39,7 @@
 ## Concepto del Juego  
 **Resumen de la Narrativa**: En una ciudad ficticia moderna (o pueblo), los jugadores administran un centro de emergencias avanzado. Desde rescatar a ciudadanos atrapados en incendios hasta responder a desastres naturales y coordinar equipos en situaciones de crisis, cada decisión impacta la seguridad de la población y la eficiencia de los recursos.  
 
-## Mecánicas Principales de Juego  
+## Mecanicas Principales de Juego  
 
 **Mecánicas Principales (Núcleo del Gameplay)**  
 | Mecánica               | Descripción                                                                 |
