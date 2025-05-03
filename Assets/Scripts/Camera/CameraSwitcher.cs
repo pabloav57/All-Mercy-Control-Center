@@ -19,6 +19,8 @@ public class CameraSwitcher : MonoBehaviour
     private string nombreUnidadActual = "";
     private string modoCamaraActual = "Vista táctica";
 
+    public static bool EsVistaTactica { get; private set; } = true;
+
     void Start()
     {
         GameObject[] encontrados = GameObject.FindGameObjectsWithTag("Unidad");
@@ -93,6 +95,8 @@ public class CameraSwitcher : MonoBehaviour
         }
 
         enCamaraTactica = true;
+        EsVistaTactica = true;
+
         modoCamaraActual = "Vista táctica";
         nombreUnidadActual = "";
 
@@ -114,6 +118,8 @@ public class CameraSwitcher : MonoBehaviour
         controladoresUnidad[indiceUnidadActual].inputActivo = true;
 
         enCamaraTactica = false;
+        EsVistaTactica = false;
+
         nombreUnidadActual = unidades[indiceUnidadActual].name;
         modoCamaraActual = "Vista de unidad";
 
@@ -160,6 +166,13 @@ public class CameraSwitcher : MonoBehaviour
         if (!enCamaraTactica && !string.IsNullOrEmpty(nombreUnidadActual))
         {
             GUI.Label(new Rect(20, 50, 400, 30), "Unidad actual: " + nombreUnidadActual, estilo);
+
+            if (controladoresUnidad[indiceUnidadActual] != null)
+            {
+                float velocidadMps = controladoresUnidad[indiceUnidadActual].GetComponent<Rigidbody>().linearVelocity.magnitude;
+                float velocidadKmh = velocidadMps * 3.6f;
+                GUI.Label(new Rect(20, 80, 400, 30), "Velocidad: " + velocidadKmh.ToString("F2") + " km/h", estilo);
+            }
         }
     }
 }
