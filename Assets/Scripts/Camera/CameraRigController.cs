@@ -8,15 +8,15 @@ public class CameraRigController : MonoBehaviour
     public float movementTime = 5f;
     public float rotationAmount = 10f;
     public Vector3 zoomAmount = new Vector3(0, -5, 5);
+    public float zoomSpeed = 2f; // Ajustar la velocidad del zoom
+    public float rotationSpeed = 5f; // Velocidad de la rotación de la cámara con el ratón
 
     private Vector3 newPosition;
     private Quaternion newRotation;
     private Vector3 newZoom;
 
-    private Vector3 dragStartPosition;
-    private Vector3 dragCurrentPosition;
-    private Vector3 rotateStartPosition;
-    private Vector3 rotateCurrentPosition;
+    private float currentPitch = 0f; // Ángulo de rotación en el eje X (vertical)
+    private float currentYaw = 0f; // Ángulo de rotación en el eje Y (horizontal)
 
     public static CameraRigController instance;
 
@@ -71,43 +71,29 @@ public class CameraRigController : MonoBehaviour
 
     void HandleMouseInput()
     {
+        // Manejo del zoom con la rueda del ratón
         if (Input.mouseScrollDelta.y != 0)
         {
-            newZoom += Input.mouseScrollDelta.y * zoomAmount;
+            // Control de zoom: desplazamiento rueda del ratón
+            newZoom += Input.mouseScrollDelta.y * zoomAmount; 
         }
 
-        if (Input.GetMouseButtonDown(0))
+        // Manejo de la rotación de la cámara con el ratón (horizontales y verticales)
+        if (Input.GetMouseButton(1)) // Botón derecho del ratón para girar la cámara
         {
-            Plane plane = new Plane(Vector3.up, Vector3.zero);
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (plane.Raycast(ray, out float entry))
-            {
-                dragStartPosition = ray.GetPoint(entry);
-            }
-        }
+            // Calcular el desplazamiento del ratón
+            float mouseX = Input.GetAxis("Mouse X"); 
+            float mouseY = Input.GetAxis("Mouse Y"); 
 
-        if (Input.GetMouseButton(0))
-        {
-            Plane plane = new Plane(Vector3.up, Vector3.zero);
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (plane.Raycast(ray, out float entry))
-            {
-                dragCurrentPosition = ray.GetPoint(entry);
-                newPosition += dragStartPosition - dragCurrentPosition;
-            }
-        }
+            
+            currentYaw += mouseX * rotationSpeed; 
+            currentPitch -= mouseY * rotationSpeed; 
 
-        if (Input.GetMouseButtonDown(2))
-        {
-            rotateStartPosition = Input.mousePosition;
-        }
+            // Limitar la rotación vertical para evitar que la cámara gire demasiado
+            currentPitch = Mathf.Clamp(currentPitch, -80f, 80f);
 
-        if (Input.GetMouseButton(2))
-        {
-            rotateCurrentPosition = Input.mousePosition;
-            Vector3 difference = rotateStartPosition - rotateCurrentPosition;
-            rotateStartPosition = rotateCurrentPosition;
-            newRotation *= Quaternion.Euler(Vector3.up * (-difference.x / 5f));
+            // Aplicar la rotación a la cámara
+            newRotation = Quaternion.Euler(currentPitch, currentYaw, 0f);
         }
     }
 
@@ -115,16 +101,15 @@ public class CameraRigController : MonoBehaviour
     {
         float speed = Input.GetKey(KeyCode.LeftShift) ? fastSpeed : normalSpeed;
 
+        // Movimiento de la cámara
         if (Input.GetKey(KeyCode.W)) newPosition += transform.forward * speed * Time.deltaTime;
         if (Input.GetKey(KeyCode.S)) newPosition -= transform.forward * speed * Time.deltaTime;
         if (Input.GetKey(KeyCode.D)) newPosition += transform.right * speed * Time.deltaTime;
         if (Input.GetKey(KeyCode.A)) newPosition -= transform.right * speed * Time.deltaTime;
 
+        // Rotación de la cámara con las teclas Q y E
         if (Input.GetKey(KeyCode.Q)) newRotation *= Quaternion.Euler(Vector3.up * rotationAmount * Time.deltaTime);
         if (Input.GetKey(KeyCode.E)) newRotation *= Quaternion.Euler(Vector3.up * -rotationAmount * Time.deltaTime);
-
-        if (Input.GetKey(KeyCode.R)) newZoom += zoomAmount * Time.deltaTime;
-        if (Input.GetKey(KeyCode.F)) newZoom -= zoomAmount * Time.deltaTime;
     }
 
     public void Enfocar(Vector3 posicionObjetivo)

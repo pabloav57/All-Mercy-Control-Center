@@ -14,6 +14,12 @@ public class UnidadSelectorPanel : MonoBehaviour
     public GameObject prefabBombero;
     public GameObject prefabAmbulancia;
 
+    public GameObject puntoDestinoPrefab;  // Prefab del punto que el jugador puede seleccionar
+
+    private GameObject puntoDestinoActual; // Para almacenar el punto de destino actual
+
+    public CameraSwitcher cameraSwitcher;
+
     void Start()
     {
         MostrarUnidadesExistentes();
@@ -61,30 +67,79 @@ public class UnidadSelectorPanel : MonoBehaviour
         }
     }
 
-    public void CrearUnidad(string tipo)
+    public void LlamarUnidad(string tipo)
     {
-        Vector3 posicion = new Vector3(Random.Range(-20, 20), 0, Random.Range(-20, 20));
-        GameObject nuevo = null;
-
-        switch (tipo)
+        // Crear un punto de destino para que el jugador pueda seleccionar donde quiere que aparezca la unidad
+        if (puntoDestinoActual != null)
         {
-            case "Policia":
-                nuevo = Instantiate(prefabPolicia, posicion, Quaternion.identity);
-                nuevo.GetComponent<Unidad>().tipoUnidad = "Policia"; // Forzamos asignación
-                break;
-            case "Bombero":
-                nuevo = Instantiate(prefabBombero, posicion, Quaternion.identity);
-                nuevo.GetComponent<Unidad>().tipoUnidad = "Bombero";
-                break;
-            case "Ambulancia":
-                nuevo = Instantiate(prefabAmbulancia, posicion, Quaternion.identity);
-                nuevo.GetComponent<Unidad>().tipoUnidad = "Ambulancia";
-                break;
+            Destroy(puntoDestinoActual);  // Eliminar el punto anterior si existiera
         }
 
-        if (nuevo != null)
+        // Crear un nuevo punto de destino en el centro del mapa (por ejemplo)
+        puntoDestinoActual = Instantiate(puntoDestinoPrefab, new Vector3(0, 0, 0), Quaternion.identity);
+        puntoDestinoActual.SetActive(true); // Asegurarse de que el punto está visible para el jugador
+
+        // Esperar a que el jugador haga clic en el mapa
+        StartCoroutine(WatingForClick(tipo));
+    }
+
+    private System.Collections.IEnumerator WatingForClick(string tipo)
+    {
+        // Mientras el jugador no haga clic, seguimos esperando
+        while (true)
         {
-            MostrarUnidadesExistentes();
+            if (Input.GetMouseButtonDown(0)) // Detectar clic izquierdo
+            {
+                // Raycast desde la cámara hacia el mapa para obtener la posición del clic
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                RaycastHit hit;
+
+                if (Physics.Raycast(ray, out hit))
+                {
+                    // Obtener la posición donde el jugador hizo clic y mover el punto de destino a esa posición
+                    Vector3 posicionDestino = hit.point;
+
+                    // Crear la unidad en la posición seleccionada
+                    CrearUnidad(tipo, posicionDestino);
+
+                    // Destruir el punto de destino después de haber creado la unidad
+                    Destroy(puntoDestinoActual);
+                    break;
+                }
+            }
+            yield return null;
         }
     }
+
+private void CrearUnidad(string tipo, Vector3 posicion)
+{
+    GameObject nuevo = null;
+
+    switch (tipo)
+    {
+        case "Policia":
+            nuevo = Instantiate(prefabPolicia, posicion, Quaternion.identity);
+            nuevo.GetComponent<Unidad>().tipoUnidad = "Policia"; // Forzamos asignación
+            break;
+        case "Bombero":
+            nuevo = Instantiate(prefabBombero, posicion, Quaternion.identity);
+            nuevo.GetComponent<Unidad>().tipoUnidad = "Bombero";
+            break;
+        case "Ambulancia":
+            nuevo = Instantiate(prefabAmbulancia, posicion, Quaternion.identity);
+            nuevo.GetComponent<Unidad>().tipoUnidad = "Ambulancia";
+            break;
+    }
+
+    if (nuevo != null)
+    {
+        MostrarUnidadesExistentes();
+
+        // Llamar a la actualización de las cámaras
+        if (cameraSwitcher != null)
+        {
+            cameraSwitcher.ActualizarUnidadesYCamaras();
+        }
+    }
+}
 }

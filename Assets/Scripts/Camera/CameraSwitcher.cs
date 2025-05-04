@@ -23,41 +23,8 @@ public class CameraSwitcher : MonoBehaviour
 
     void Start()
     {
-        GameObject[] encontrados = GameObject.FindGameObjectsWithTag("Unidad");
-        Debug.Log("Unidades encontradas: " + encontrados.Length);
-
-        foreach (var unidad in encontrados)
-        {
-            var camTransform = unidad.transform.Find("VCam_TerceraPersona");
-
-            if (camTransform != null)
-            {
-                var camara = camTransform.GetComponent<CinemachineCamera>();
-                var controlador = unidad.GetComponent<CarController>();
-
-                if (camara != null && controlador != null)
-                {
-                    unidades.Add(unidad);
-                    camarasUnidad.Add(camara);
-                    controladoresUnidad.Add(controlador);
-                    camara.Priority = prioridadBaja;
-                }
-                else
-                {
-                    Debug.LogWarning($"Unidad '{unidad.name}' no tiene cámara o controlador válidos.");
-                }
-            }
-            else
-            {
-                Debug.Log($"No se encontró 'VCam_TerceraPersona' en: {unidad.name}");
-            }
-        }
-
-        if (unidades.Count == 0)
-        {
-            Debug.LogError("No se encontraron unidades con cámaras válidas.");
-        }
-
+        // Llamada a la función para cargar las unidades inicialmente
+        ActualizarUnidades();
         ActivarCamaraTactica();
     }
 
@@ -154,6 +121,93 @@ public class CameraSwitcher : MonoBehaviour
 
         Debug.Log("Cambiada a unidad: " + nombreUnidadActual);
     }
+
+    void ActualizarUnidades()
+    {
+        // Encuentra todas las unidades con la etiqueta "Unidad"
+        GameObject[] encontrados = GameObject.FindGameObjectsWithTag("Unidad");
+        Debug.Log("Unidades encontradas: " + encontrados.Length);
+
+        // Agregar unidades a las listas
+        foreach (var unidad in encontrados)
+        {
+            if (!unidades.Contains(unidad)) // Evitar duplicados
+            {
+                var camTransform = unidad.transform.Find("VCam_TerceraPersona");
+
+                if (camTransform != null)
+                {
+                    var camara = camTransform.GetComponent<CinemachineCamera>();
+                    var controlador = unidad.GetComponent<CarController>();
+
+                    if (camara != null && controlador != null)
+                    {
+                        unidades.Add(unidad);
+                        camarasUnidad.Add(camara);
+                        controladoresUnidad.Add(controlador);
+                        camara.Priority = prioridadBaja;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Unidad '{unidad.name}' no tiene cámara o controlador válidos.");
+                    }
+                }
+                else
+                {
+                    Debug.Log($"No se encontró 'VCam_TerceraPersona' en: {unidad.name}");
+                }
+            }
+        }
+
+        if (unidades.Count == 0)
+        {
+            Debug.LogError("No se encontraron unidades con cámaras válidas.");
+        }
+    }
+    public void ActualizarUnidadesYCamaras()
+{
+    // Limpiar las listas
+    unidades.Clear();
+    camarasUnidad.Clear();
+    controladoresUnidad.Clear();
+
+    // Buscar todas las unidades de nuevo
+    GameObject[] encontrados = GameObject.FindGameObjectsWithTag("Unidad");
+    Debug.Log("Unidades encontradas: " + encontrados.Length);
+
+    foreach (var unidad in encontrados)
+    {
+        var camTransform = unidad.transform.Find("VCam_TerceraPersona");
+
+        if (camTransform != null)
+        {
+            var camara = camTransform.GetComponent<CinemachineCamera>();
+            var controlador = unidad.GetComponent<CarController>();
+
+            if (camara != null && controlador != null)
+            {
+                unidades.Add(unidad);
+                camarasUnidad.Add(camara);
+                controladoresUnidad.Add(controlador);
+                camara.Priority = prioridadBaja;
+            }
+            else
+            {
+                Debug.LogWarning($"Unidad '{unidad.name}' no tiene cámara o controlador válidos.");
+            }
+        }
+        else
+        {
+            Debug.Log($"No se encontró 'VCam_TerceraPersona' en: {unidad.name}");
+        }
+    }
+
+    if (unidades.Count == 0)
+    {
+        Debug.LogError("No se encontraron unidades con cámaras válidas.");
+    }
+}
+
 
     void OnGUI()
     {

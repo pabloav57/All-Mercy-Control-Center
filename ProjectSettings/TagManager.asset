@@ -10,6 +10,7 @@ TagManager:
   - Ambulancia
   - VCam_TerceraPersona
   - Unidad
+  - Casa
   layers:
   - Default
   - TransparentFX
