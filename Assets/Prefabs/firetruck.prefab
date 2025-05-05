@@ -705,8 +705,8 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 7a5e94d0d762285498f840343fedc339, type: 3}
-  m_Resource: {fileID: 8300000, guid: 7a5e94d0d762285498f840343fedc339, type: 3}
+  m_audioClip: {fileID: 8300000, guid: c2f813803eb3a884a82d6bb0f35721e3, type: 3}
+  m_Resource: {fileID: 8300000, guid: c2f813803eb3a884a82d6bb0f35721e3, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -835,6 +835,7 @@ Transform:
   - {fileID: 7307319933505319146}
   - {fileID: 2424350312856763834}
   - {fileID: 9092961259287558529}
+  - {fileID: 2513700517113671387}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &2407065518625265840
@@ -1052,6 +1053,37 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   camTercera: {fileID: 0}
+--- !u!1 &8024775639474264115
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2513700517113671387}
+  m_Layer: 0
+  m_Name: ChorroSalida
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2513700517113671387
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8024775639474264115}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 3.37, z: 0.61}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6656298326777257986}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8537149150110727585
 GameObject:
   m_ObjectHideFlags: 0

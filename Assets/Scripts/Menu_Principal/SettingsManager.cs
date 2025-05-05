@@ -15,22 +15,29 @@ public class SettingsManager : MonoBehaviour
 
     void Start()
     {
-        // Volumen
+        // --- Volumen ---
         float savedVolume = PlayerPrefs.GetFloat("volumen", 0.75f);
         volumenSlider.value = savedVolume;
         SetVolume(savedVolume);
+        volumenSlider.onValueChanged.AddListener(OnVolumeChange);
 
-        // Calidad
+        // --- Calidad ---
         calidadDropdown.ClearOptions();
         List<string> options = new List<string>(QualitySettings.names);
         calidadDropdown.AddOptions(options);
-        calidadDropdown.value = QualitySettings.GetQualityLevel();
+        int savedQuality = PlayerPrefs.GetInt("calidad", QualitySettings.GetQualityLevel());
+        calidadDropdown.value = savedQuality;
         calidadDropdown.RefreshShownValue();
+        SetQuality(savedQuality);
+        calidadDropdown.onValueChanged.AddListener(SetQuality);
 
-        // Pantalla Completa
-        pantallaCompletaToggle.isOn = Screen.fullScreen;
+        // --- Pantalla completa ---
+        bool isFullscreen = PlayerPrefs.GetInt("fullscreen", Screen.fullScreen ? 1 : 0) == 1;
+        pantallaCompletaToggle.isOn = isFullscreen;
+        SetFullscreen(isFullscreen);
+        pantallaCompletaToggle.onValueChanged.AddListener(SetFullscreen);
 
-        // Resoluciones
+        // --- Resolución ---
         resoluciones = Screen.resolutions;
         resolucionDropdown.ClearOptions();
         List<string> resolucionOptions = new List<string>();
@@ -49,10 +56,14 @@ public class SettingsManager : MonoBehaviour
         }
 
         resolucionDropdown.AddOptions(resolucionOptions);
-        resolucionDropdown.value = currentResolutionIndex;
+        int savedResolutionIndex = PlayerPrefs.GetInt("resolutionIndex", currentResolutionIndex);
+        resolucionDropdown.value = savedResolutionIndex;
         resolucionDropdown.RefreshShownValue();
+        SetResolution(savedResolutionIndex);
+        resolucionDropdown.onValueChanged.AddListener(SetResolution);
     }
 
+    // Volumen
     public void OnVolumeChange(float volume)
     {
         SetVolume(volume);
@@ -64,19 +75,25 @@ public class SettingsManager : MonoBehaviour
         audioMixer.SetFloat("MasterVolume", Mathf.Log10(Mathf.Clamp(volume, 0.0001f, 1)) * 20);
     }
 
+    // Calidad
     public void SetQuality(int qualityIndex)
     {
         QualitySettings.SetQualityLevel(qualityIndex);
+        PlayerPrefs.SetInt("calidad", qualityIndex);
     }
 
+    // Pantalla completa
     public void SetFullscreen(bool isFullscreen)
     {
         Screen.fullScreen = isFullscreen;
+        PlayerPrefs.SetInt("fullscreen", isFullscreen ? 1 : 0);
     }
 
+    // Resolución
     public void SetResolution(int resolutionIndex)
     {
         Resolution res = resoluciones[resolutionIndex];
         Screen.SetResolution(res.width, res.height, Screen.fullScreen);
+        PlayerPrefs.SetInt("resolutionIndex", resolutionIndex);
     }
 }

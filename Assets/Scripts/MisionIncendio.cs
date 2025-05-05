@@ -10,7 +10,11 @@ public class GestorIncendios : MonoBehaviour
     public GameObject marcadorMapa;
     public TextMeshProUGUI textoAviso;
 
-    public float radioApagado = 5f;
+    public GameObject chorroAguaPrefab;
+    public AudioClip sonidoChorroAgua;
+    public AudioClip sonidoMisionSuperada;
+
+    public float radioApagado = 10f;
     public float tiempoParaPropagar = 30f;
     public float radioPropagacion = 15f;
 
@@ -20,10 +24,23 @@ public class GestorIncendios : MonoBehaviour
     private Transform casaObjetivo;
     private bool incendioActivo = false;
     private bool yaSePropago = false;
+    private List<GameObject> incendiosPropagados = new List<GameObject>();
+
+    public Transform puntoDeSalida;
+
+    private AudioSource audioSource;
+    private GameObject chorroAgua;
+    private bool estaUsandoChorro = false;
+    private float tiempoPresionadoF = 0f;
+
+    private Color colorVerdeGradiente = new Color(0.0f, 1.0f, 0.0f); // Color verde (para el gradiente)
+    private Color colorRojizo = new Color(1.0f, 0.0f, 0.0f); // Color rojo para incendios
 
     void Start()
     {
+        audioSource = GetComponent<AudioSource>();
         StartCoroutine(GenerarIncendioCada(60f));
+        ActualizarColorTexto(false);  // Inicialmente, no hay incendios
     }
 
     IEnumerator GenerarIncendioCada(float tiempo)
@@ -52,6 +69,8 @@ public class GestorIncendios : MonoBehaviour
         textoAviso.text = "¡Incendio en " + casaObjetivo.name + "!";
         incendioActivo = true;
         yaSePropago = false;
+
+        ActualizarColorTexto(true);  // Cambiar color a rojo si hay incendio
 
         StartCoroutine(EsperarUnidadBomberos());
         StartCoroutine(EsperarPropagacion());
@@ -126,14 +145,80 @@ public class GestorIncendios : MonoBehaviour
 
         Collider col = fuego.GetComponent<Collider>();
         if (col != null) col.isTrigger = true;
+
+        incendiosPropagados.Add(fuego); // Añadir el incendio propagado a la lista
     }
 
     void ApagarFuego()
     {
+        // Apagar solo el fuego de la casa original
         if (fuegoInstanciado) Destroy(fuegoInstanciado);
         if (humoInstanciado) Destroy(humoInstanciado);
         if (marcadorInstanciado) Destroy(marcadorInstanciado);
-        textoAviso.text = "Incendio apagado.";
+        
+        textoAviso.text = "Incendio apagado en " + casaObjetivo.name + ".";
         incendioActivo = false;
+
+        // Apagar también los incendios propagados
+        foreach (var incendio in incendiosPropagados)
+        {
+            Destroy(incendio);
+        }
+        incendiosPropagados.Clear(); // Limpiar la lista de incendios propagados
+
+        ActualizarColorTexto(false);  // Restaurar el color verde cuando no hay incendios
+
+        // Reproducir sonido de misión superada
+        if (sonidoMisionSuperada != null)
+        {
+            audioSource.PlayOneShot(sonidoMisionSuperada);
+        }
+    }
+
+    void ActualizarColorTexto(bool hayIncendio)
+    {
+        if (hayIncendio)
+        {
+            // Si hay incendios, ponemos el texto a rojo (puedes elegir un tono específico si lo deseas)
+            textoAviso.color = colorRojizo;
+        }
+        else
+        {
+            // Si no hay incendios, ponemos un gradiente verde
+            textoAviso.color = colorVerdeGradiente;
+        }
+    }
+
+    void Update()
+    {
+        if (Input.GetKey(KeyCode.F))
+        {
+            if (!estaUsandoChorro)
+            {
+                chorroAgua = Instantiate(chorroAguaPrefab, puntoDeSalida.position, puntoDeSalida.rotation);
+                estaUsandoChorro = true;
+
+                if (sonidoChorroAgua != null)
+                {
+                    audioSource.PlayOneShot(sonidoChorroAgua, 0.5f);
+                }
+            }
+
+            tiempoPresionadoF += Time.deltaTime;
+            var ps = chorroAgua.GetComponent<ParticleSystem>();
+            var main = ps.main;
+            
+            main.startSize = Mathf.Lerp(0.1f, 0.5f, tiempoPresionadoF);
+
+            var velocityOverLifetime = ps.velocityOverLifetime;
+            velocityOverLifetime.x = Mathf.Lerp(1f, 5f, tiempoPresionadoF);
+
+        }
+        else if (estaUsandoChorro)
+        {
+            Destroy(chorroAgua);
+            estaUsandoChorro = false;
+            tiempoPresionadoF = 0f;
+        }
     }
 }

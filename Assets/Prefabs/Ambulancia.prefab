@@ -604,7 +604,7 @@ GameObject:
   - component: {fileID: 180643504238424106}
   - component: {fileID: 8534698355470190127}
   m_Layer: 0
-  m_Name: Vehicle_Ambulance
+  m_Name: Ambulancia
   m_TagString: Unidad
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

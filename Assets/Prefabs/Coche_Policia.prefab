@@ -642,7 +642,7 @@ GameObject:
   - component: {fileID: 5733360272411460237}
   - component: {fileID: 6585005720686284615}
   m_Layer: 0
-  m_Name: Police_Car Variant
+  m_Name: Coche_Policia
   m_TagString: Unidad
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
