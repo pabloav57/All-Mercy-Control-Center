@@ -1,10 +1,9 @@
 # All-Mercy Control Center
 
-<<<<<<< HEAD
 ## Un juego de simulación en el que tomas el control de un centro de emergencias, gestionando y coordinando equipos de rescate, policía, bomberos y drones para resolver crisis en tiempo real
 =======
 ## Subtítulo o Descripción
->>>>>>> 4ee948bae6d598dcc311b13f0a656a53ea4c7f80
+
 
 ### Autor: Pablo Antelo Vieito  
 ### Fecha: 22/01/2025  
