@@ -1,7 +1,7 @@
 # All-Mercy Control Center
 
 ## Un juego de simulación en el que tomas el control de un centro de emergencias, gestionando y coordinando equipos de rescate, policía, bomberos y drones para resolver crisis en tiempo real
-=======
+
 ## Subtítulo o Descripción
 
 
