@@ -1659,7 +1659,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   canciones:
   - {fileID: 8300000, guid: 04ba889f88e3f5c42ade26ef9271121f, type: 3}
-  - {fileID: 8300000, guid: 26a248691870dd444876aff7ed231481, type: 3}
   - {fileID: 8300000, guid: 2b46c9e8164cfdb46b8ab1469faaa839, type: 3}
 --- !u!4 &420031343
 Transform:
